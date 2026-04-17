@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "timestamp": "2026-04-17T15:22:33.457720",
+    "action": "LOGIN",
+    "user": "admin",
+    "details": "Successful authentication",
+    "hash": "8550a355d50ab003"
+  },
+  {
+    "id": 2,
+    "timestamp": "2026-04-17T15:23:51.380657",
+    "action": "REGISTER",
+    "user": "nam123",
+    "details": "New cashier registered",
+    "hash": "180f87ff79499f99"
+  },
+  {
+    "id": 3,
+    "timestamp": "2026-04-17T15:23:59.596336",
+    "action": "LOGIN_FAIL",
+    "user": "nam123",
+    "details": "Bad credentials",
+    "hash": "bbf045af5188f3c9"
+  },
+  {
+    "id": 4,
+    "timestamp": "2026-04-17T15:24:06.211072",
+    "action": "LOGIN",
+    "user": "nam123",
+    "details": "Successful authentication",
+    "hash": "60c4df9019de8ecf"
+  },
+  {
+    "id": 5,
+    "timestamp": "2026-04-17T15:25:09.221424",
+    "action": "MESSAGE_SENT",
+    "user": "nam123",
+    "details": "To:admin Cat:billing ID:1",
+    "hash": "27c172f853603562"
+  },
+  {
+    "id": 6,
+    "timestamp": "2026-04-17T15:25:31.294414",
+    "action": "LOGIN",
+    "user": "admin",
+    "details": "Successful authentication",
+    "hash": "8550a355d50ab003"
+  },
+  {
+    "id": 7,
+    "timestamp": "2026-04-17T15:25:52.434826",
+    "action": "MESSAGE_READ",
+    "user": "admin",
+    "details": "Message ID:1",
+    "hash": "90a81c5ef0c2991f"
+  },
+  {
+    "id": 8,
+    "timestamp": "2026-04-17T15:32:01.019286",
+    "action": "LOGIN",
+    "user": "admin",
+    "details": "Successful authentication",
+    "hash": "8550a355d50ab003"
+  }
+]

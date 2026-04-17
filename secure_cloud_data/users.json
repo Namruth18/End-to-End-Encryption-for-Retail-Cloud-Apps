@@ -1,0 +1,14 @@
+{
+  "admin": {
+    "password": "admin123",
+    "role": "admin",
+    "salt": "e3UVnNQDXJKFZraHEdOwUQ==",
+    "created": "2026-04-17T15:22:11.625488"
+  },
+  "nam123": {
+    "password": "nam123",
+    "role": "cashier",
+    "salt": "YnMv5ujNkUeUZUWEKnjvwQ==",
+    "created": "2026-04-17T15:23:51.376790"
+  }
+}

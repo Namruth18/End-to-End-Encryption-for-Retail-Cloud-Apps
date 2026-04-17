@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureCloud E2EE | Yenepoya University 2026</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg:        #0f172a;
+            --bg2:       #1e293b;
+            --bg3:       #0f1f35;
+            --cyan:      #06b6d4;
+            --blue:      #3b82f6;
+            --green:     #10b981;
+            --red:       #ef4444;
+            --amber:     #f59e0b;
+            --purple:    #8b5cf6;
+            --text:      #f8fafc;
+            --muted:     #94a3b8;
+            --glass:     rgba(30,41,59,0.55);
+            --border:    rgba(255,255,255,0.08);
+        }
+        body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+        /* ══ AUTH ══════════════════════════════════════════════════════════ */
+        .auth-wrap{display:flex;justify-content:center;align-items:center;min-height:100vh;
+            background:radial-gradient(ellipse at 60% 30%,#1e293b 0%,#0f172a 70%)}
+        .auth-card{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--border);
+            border-radius:20px;padding:36px 40px;width:100%;max-width:440px;
+            box-shadow:0 30px 60px -15px rgba(0,0,0,0.6)}
+        .auth-brand{text-align:center;margin-bottom:24px}
+        .auth-brand .icon{font-size:40px;display:block;margin-bottom:6px}
+        .auth-brand h1{font-size:22px;font-weight:700;color:var(--cyan)}
+        .auth-brand p{font-size:12px;color:var(--muted);margin-top:2px}
+
+        /* Tabs */
+        .tabs{display:flex;background:rgba(15,23,42,0.7);border-radius:10px;padding:4px;margin-bottom:24px}
+        .tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;
+            cursor:pointer;border-radius:7px;color:var(--muted);transition:all .25s;user-select:none}
+        .tab.active{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#fff}
+
+        .panel{display:none}.panel.active{display:block}
+
+        /* Form */
+        .fgroup{margin-bottom:16px}
+        .fgroup label{display:block;margin-bottom:6px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+        .fgroup input,.fgroup select{width:100%;padding:10px 13px;
+            background:rgba(15,23,42,0.8);border:1px solid rgba(148,163,184,.12);
+            border-radius:8px;color:var(--text);font-size:13px;transition:border .2s}
+        .fgroup input:focus,.fgroup select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(6,182,212,.1)}
+        .fgroup select option{background:#1e293b}
+        .hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+        .btn-primary{width:100%;padding:11px;background:linear-gradient(135deg,var(--cyan),var(--blue));
+            border:none;border-radius:8px;color:#fff;font-weight:700;font-size:14px;
+            cursor:pointer;transition:all .25s;margin-top:4px}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 25px -5px rgba(6,182,212,.4)}
+        .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
+
+        .auth-msg{padding:10px 13px;border-radius:8px;font-size:12px;margin-bottom:14px;display:none}
+        .auth-msg.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+        .auth-msg.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7}
+
+        .default-cred{margin-top:14px;padding:10px 13px;background:rgba(6,182,212,.07);
+            border:1px solid rgba(6,182,212,.18);border-radius:8px;font-size:11px;color:var(--muted);text-align:center}
+        .default-cred strong{color:var(--cyan)}
+
+        /* Role info box on register */
+        .role-info{margin-top:10px;padding:10px 13px;border-radius:8px;font-size:11px;display:none}
+        .role-info.cashier{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#fcd34d}
+        .role-info.customer_support{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);color:#c4b5fd}
+
+        /* ══ APP SHELL ═══════════════════════════════════════════════════ */
+        .app{display:none;min-height:100vh}
+        .sidebar{position:fixed;left:0;top:0;width:255px;height:100vh;background:var(--bg2);
+            border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+        .sidebar-logo{padding:22px 22px 18px;border-bottom:1px solid var(--border)}
+        .sidebar-logo .name{font-size:16px;font-weight:700;color:var(--cyan)}
+        .sidebar-logo .sub{font-size:10px;color:var(--muted);margin-top:2px}
+        .nav{list-style:none;flex:1;padding:10px 0}
+        .nav-item{padding:11px 22px;cursor:pointer;display:flex;align-items:center;gap:11px;
+            color:var(--muted);font-size:13px;border-left:3px solid transparent;transition:all .22s}
+        .nav-item:hover{background:rgba(6,182,212,.08);color:var(--text)}
+        .nav-item.active{background:rgba(6,182,212,.13);color:var(--cyan);border-left-color:var(--cyan)}
+        .user-block{padding:16px 20px;border-top:1px solid var(--border)}
+        .user-row{display:flex;align-items:center;gap:11px}
+        .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+        .avatar.admin{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+        .avatar.cashier{background:linear-gradient(135deg,#06b6d4,#3b82f6)}
+        .avatar.customer_support{background:linear-gradient(135deg,#8b5cf6,#06b6d4)}
+        .uname{font-size:13px;font-weight:600}
+        .urole{font-size:10px;color:var(--muted);margin-top:1px;text-transform:uppercase;letter-spacing:.05em}
+        .signout{font-size:11px;color:var(--red);cursor:pointer;background:none;border:none;padding:0;margin-top:3px}
+        .signout:hover{text-decoration:underline}
+
+        /* Role badge pill */
+        .role-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;
+            border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+        .role-pill.admin{background:rgba(245,158,11,.15);color:#fcd34d}
+        .role-pill.cashier{background:rgba(6,182,212,.15);color:var(--cyan)}
+        .role-pill.customer_support{background:rgba(139,92,246,.15);color:#c4b5fd}
+
+        /* Category pill */
+        .cat-pill{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase}
+        .cat-pill.billing{background:rgba(245,158,11,.15);color:#fcd34d}
+        .cat-pill.transaction{background:rgba(16,185,129,.15);color:var(--green)}
+        .cat-pill.customer{background:rgba(139,92,246,.15);color:#c4b5fd}
+        .cat-pill.general{background:rgba(148,163,184,.15);color:var(--muted)}
+
+        .main{margin-left:255px;padding:28px}
+        .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+        .page-title h1{font-size:24px;font-weight:700}
+        .page-title p{font-size:12px;color:var(--muted);margin-top:3px}
+        .status-dot-wrap{display:flex;align-items:center;gap:7px;padding:7px 14px;
+            background:rgba(16,185,129,.1);border-radius:20px;font-size:11px;color:var(--green)}
+        .pulse{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+        /* Cards */
+        .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:26px}
+        .card{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:14px;padding:22px;transition:all .25s}
+        .card:hover{transform:translateY(-3px);box-shadow:0 18px 35px -12px rgba(0,0,0,.35)}
+        .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .card-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+        .card-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px}
+        .card-icon.c{background:rgba(6,182,212,.15);color:var(--cyan)}
+        .card-icon.g{background:rgba(16,185,129,.15);color:var(--green)}
+        .card-icon.a{background:rgba(245,158,11,.15);color:var(--amber)}
+        .card-val{font-size:32px;font-weight:700;margin-bottom:4px}
+        .card-val.c{color:var(--cyan)}.card-val.g{color:var(--green)}.card-val.a{color:var(--amber)}
+        .card-desc{font-size:11px;color:var(--muted)}
+
+        /* Quick actions */
+        .qlabel{font-size:15px;font-weight:600;margin-bottom:14px}
+        .qgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:26px}
+        .qcard{background:var(--glass);border:1px solid var(--border);border-radius:12px;
+            padding:16px;cursor:pointer;transition:all .22s;display:flex;align-items:center;gap:13px}
+        .qcard:hover{background:rgba(6,182,212,.09);border-color:var(--cyan);transform:translateY(-2px)}
+        .qcard-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+        .qcard h3{font-size:13px;font-weight:600;margin-bottom:2px}
+        .qcard p{font-size:11px;color:var(--muted)}
+
+        /* Role access info panel */
+        .access-panel{background:rgba(6,182,212,.05);border:1px solid rgba(6,182,212,.15);
+            border-radius:12px;padding:16px 20px;margin-bottom:24px}
+        .access-panel h4{font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+        .access-panel p{font-size:12px;color:var(--muted);line-height:1.6}
+
+        /* Sections */
+        .section{display:none;animation:fadeIn .3s ease}.section.active{display:block}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Compose */
+        .compose-box{background:var(--glass);border:1px solid var(--border);border-radius:16px;
+            padding:28px;max-width:680px}
+        .compose-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+        .compose-top h2{font-size:17px;font-weight:600}
+        .enc-badge{display:flex;align-items:center;gap:5px;padding:5px 11px;
+            background:rgba(16,185,129,.13);border-radius:16px;font-size:10px;color:var(--green);font-weight:700}
+        .frow{margin-bottom:16px}
+        .frow label{display:block;margin-bottom:6px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+        .frow select,.frow textarea{width:100%;padding:10px 13px;
+            background:rgba(15,23,42,.8);border:1px solid rgba(148,163,184,.1);
+            border-radius:8px;color:var(--text);font-size:13px}
+        .frow select:focus,.frow textarea:focus{outline:none;border-color:var(--cyan)}
+        .frow select option{background:#1e293b}
+        .frow textarea{min-height:130px;resize:vertical;font-family:inherit}
+        .btn-send{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#fff;
+            border:none;padding:11px 26px;border-radius:8px;font-weight:600;cursor:pointer;
+            transition:all .25s;display:flex;align-items:center;gap:7px;font-size:13px}
+        .btn-send:hover{transform:translateY(-2px);box-shadow:0 10px 25px -5px rgba(6,182,212,.4)}
+
+        /* Inbox */
+        .inbox-box{background:var(--glass);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+        .inbox-top{padding:16px 22px;border-bottom:1px solid var(--border);
+            display:flex;justify-content:space-between;align-items:center}
+        .inbox-top h2{font-size:16px;font-weight:600}
+        .msg-list{max-height:530px;overflow-y:auto}
+        .msg-row{padding:13px 22px;border-bottom:1px solid rgba(148,163,184,.07);
+            cursor:pointer;transition:background .18s;
+            display:grid;grid-template-columns:52px 1fr 100px 130px 80px;align-items:center;gap:12px}
+        .msg-row:hover{background:rgba(6,182,212,.06)}
+        .msg-row.unread{background:rgba(6,182,212,.09)}
+        .msg-id{font-size:11px;color:var(--muted);font-weight:600}
+        .msg-from{font-weight:600;font-size:13px}
+        .msg-time{font-size:11px;color:var(--muted)}
+        .status-badge{display:inline-block;padding:2px 9px;border-radius:9px;font-size:10px;font-weight:700;text-transform:uppercase}
+        .status-badge.new{background:rgba(6,182,212,.18);color:var(--cyan)}
+        .status-badge.read{background:rgba(148,163,184,.15);color:var(--muted)}
+
+        /* Modal */
+        .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+            backdrop-filter:blur(4px);z-index:1000;justify-content:center;align-items:center;padding:16px}
+        .modal-bg.open{display:flex}
+        .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+            width:100%;max-width:580px;max-height:82vh;overflow-y:auto;animation:mslide .25s ease}
+        @keyframes mslide{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+        .modal-head{padding:20px 22px;border-bottom:1px solid var(--border);
+            display:flex;justify-content:space-between;align-items:center}
+        .modal-close{background:none;border:none;color:var(--muted);font-size:21px;cursor:pointer;line-height:1}
+        .modal-body{padding:22px}
+        .modal-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--muted)}
+        .enc-preview{font-family:'Courier New',monospace;font-size:11px;color:var(--muted);
+            word-break:break-all;padding:10px;background:rgba(0,0,0,.3);border-radius:7px;margin-bottom:12px}
+        .dec-content{font-size:15px;line-height:1.65;padding:14px;
+            background:rgba(6,182,212,.08);border-left:3px solid var(--cyan);
+            border-radius:0 8px 8px 0;margin-bottom:14px;min-height:54px}
+        .verify-badge{display:flex;align-items:center;gap:7px;padding:9px 13px;
+            background:rgba(16,185,129,.13);border-radius:8px;font-size:12px;color:var(--green)}
+        .btn-dec{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#fff;
+            border:none;padding:9px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}
+        .btn-dec:hover{opacity:.9}
+
+        /* Audit */
+        .audit-box{background:var(--glass);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+        .audit-table{width:100%;border-collapse:collapse}
+        .audit-table th,.audit-table td{padding:11px 18px;text-align:left;font-size:12px}
+        .audit-table th{background:rgba(15,23,42,.6);font-weight:600;color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+        .audit-table tr{border-bottom:1px solid rgba(148,163,184,.07)}
+        .audit-table tr:hover{background:rgba(6,182,212,.04)}
+        .hash{font-family:'Courier New',monospace;color:var(--cyan);font-size:11px}
+        .action-pill{display:inline-block;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700}
+        .action-pill.LOGIN{background:rgba(16,185,129,.15);color:var(--green)}
+        .action-pill.REGISTER{background:rgba(139,92,246,.15);color:#c4b5fd}
+        .action-pill.MESSAGE_SENT{background:rgba(6,182,212,.15);color:var(--cyan)}
+        .action-pill.MESSAGE_READ{background:rgba(59,130,246,.15);color:var(--blue)}
+        .action-pill.LOGIN_FAIL,.action-pill.DECRYPT_DENIED{background:rgba(239,68,68,.15);color:var(--red)}
+
+        /* Toasts */
+        .toast-wrap{position:fixed;top:18px;right:18px;z-index:2000;display:flex;flex-direction:column;gap:9px}
+        .toast{padding:11px 16px;border-radius:10px;color:#fff;font-size:12px;font-weight:500;
+            display:flex;align-items:center;gap:9px;max-width:310px;
+            animation:slideIn .3s ease;box-shadow:0 8px 25px -5px rgba(0,0,0,.4)}
+        @keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+        .toast.success{background:linear-gradient(135deg,#059669,#10b981)}
+        .toast.error{background:linear-gradient(135deg,#dc2626,#ef4444)}
+        .toast.info{background:linear-gradient(135deg,#2563eb,#3b82f6)}
+
+        /* empty state */
+        .empty{padding:48px;text-align:center;color:var(--muted);font-size:13px}
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════ AUTH SCREEN ════════════════════════════════════ -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="icon">🔒</span>
+      <h1>SecureCloud E2EE</h1>
+      <p>Yenepoya University · Project 2026</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabLogin"    onclick="switchTab('login')">Sign In</div>
+      <div class="tab"        id="tabRegister" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <div class="auth-msg" id="authMsg"></div>
+
+    <!-- LOGIN -->
+    <div class="panel active" id="panelLogin">
+      <div class="fgroup">
+        <label>Username</label>
+        <input type="text" id="lUser" placeholder="Enter username" autocomplete="username">
+      </div>
+      <div class="fgroup">
+        <label>Password</label>
+        <input type="password" id="lPass" placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="btnLogin" onclick="doLogin()">🔐 Sign In</button>
+      <div class="default-cred">
+        Default admin &nbsp;→&nbsp; <strong>admin</strong> / <strong>admin123</strong>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="panel" id="panelRegister">
+      <div class="fgroup">
+        <label>Username</label>
+        <input type="text" id="rUser" placeholder="min. 3 chars · letters, numbers, _" autocomplete="off">
+      </div>
+      <div class="fgroup">
+        <label>Select Your Role</label>
+        <select id="rRole" onchange="showRoleInfo()">
+          <option value="">— Choose a role —</option>
+          <option value="cashier">💳 Cashier  (Billing & Transactions)</option>
+          <option value="customer_support">🎧 Customer Support  (Customer & General)</option>
+        </select>
+        <!-- role description shown dynamically -->
+        <div class="role-info" id="roleInfoBox"></div>
+      </div>
+      <div class="fgroup">
+        <label>Password</label>
+        <input type="password" id="rPass" placeholder="min. 6 characters" autocomplete="new-password">
+      </div>
+      <div class="fgroup">
+        <label>Confirm Password</label>
+        <input type="password" id="rConf" placeholder="Repeat password" autocomplete="new-password">
+      </div>
+      <button class="btn-primary" id="btnReg" onclick="doRegister()">🚀 Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ APP SHELL ══════════════════════════════════════ -->
+<div class="app" id="appShell">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="name">🔒 SecureCloud</div>
+      <div class="sub">Yenepoya University 2026</div>
+    </div>
+    <ul class="nav">
+      <li class="nav-item active" data-sec="dashboard">🏠 <span>Dashboard</span></li>
+      <li class="nav-item"        data-sec="compose">✉️ <span>Compose</span></li>
+      <li class="nav-item"        data-sec="inbox">📥 <span>Inbox</span></li>
+      <li class="nav-item admin-only" data-sec="audit" style="display:none">🔍 <span>Audit Log</span></li>
+    </ul>
+    <div class="user-block">
+      <div class="user-row">
+        <div class="avatar" id="sideAvatar">?</div>
+        <div>
+          <div class="uname" id="sideName">—</div>
+          <div class="urole" id="sideRole">—</div>
+          <button class="signout" onclick="doSignout()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ──────────────────────────────────────────────────── -->
+    <div class="section active" id="dashboard">
+      <div class="page-header">
+        <div class="page-title">
+          <h1>Welcome, <span id="wName">—</span> 👋</h1>
+          <p>Secure end-to-end encrypted retail messaging</p>
+        </div>
+        <div class="status-dot-wrap"><span class="pulse"></span> OPERATIONAL</div>
+      </div>
+
+      <!-- Role access info -->
+      <div class="access-panel" id="roleAccessPanel">
+        <h4>🔑 Your Access Level</h4>
+        <p id="roleAccessDesc">Loading...</p>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <div class="card-top"><span class="card-label">Unread Messages</span><div class="card-icon c">📧</div></div>
+          <div class="card-val c" id="statUnread">0</div>
+          <div class="card-desc">Encrypted messages pending decryption</div>
+        </div>
+        <div class="card">
+          <div class="card-top"><span class="card-label">Total Sent</span><div class="card-icon g">📤</div></div>
+          <div class="card-val g" id="statSent">0</div>
+          <div class="card-desc">Encrypted transmissions dispatched</div>
+        </div>
+        <div class="card" id="statUsersCard" style="display:none">
+          <div class="card-top"><span class="card-label">Total Users</span><div class="card-icon a">👥</div></div>
+          <div class="card-val a" id="statUsers">0</div>
+          <div class="card-desc">Registered accounts (admin view)</div>
+        </div>
+      </div>
+
+      <div class="qlabel">Quick Actions</div>
+      <div class="qgrid">
+        <div class="qcard" onclick="goSection('compose')">
+          <div class="qcard-icon" style="background:linear-gradient(135deg,var(--cyan),var(--blue))">✉️</div>
+          <div><h3>Compose</h3><p>Send encrypted message</p></div>
+        </div>
+        <div class="qcard" onclick="goSection('inbox')">
+          <div class="qcard-icon" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">📥</div>
+          <div><h3>Inbox</h3><p>View & decrypt messages</p></div>
+        </div>
+        <div class="qcard admin-only" onclick="goSection('audit')" style="display:none">
+          <div class="qcard-icon" style="background:linear-gradient(135deg,var(--amber),var(--red))">🔍</div>
+          <div><h3>Audit Log</h3><p>Admin access only</p></div>
+        </div>
+      </div>
+
+      <!-- Security info -->
+      <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:700px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--cyan)">🛡️ Security Protocol</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <div style="font-size:12px;color:var(--muted)">🔒 <strong style="color:var(--text)">Algorithm:</strong> Fernet AES-128-CBC + HMAC</div>
+          <div style="font-size:12px;color:var(--muted)">🔑 <strong style="color:var(--text)">Key Derivation:</strong> PBKDF2-SHA256 (100k rounds)</div>
+          <div style="font-size:12px;color:var(--muted)">📦 <strong style="color:var(--text)">Storage:</strong> Only ciphertext stored — never plaintext</div>
+          <div style="font-size:12px;color:var(--muted)">👤 <strong style="color:var(--text)">Access:</strong> Role-based (Admin / Cashier / Customer Support)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMPOSE ─────────────────────────────────────────────────────── -->
+    <div class="section" id="compose">
+      <div class="compose-box">
+        <div class="compose-top">
+          <div>
+            <h2>✉️ Compose Secure Message</h2>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px">Messages encrypted before storage · Role-restricted delivery</p>
+          </div>
+          <div class="enc-badge">🔒 AES-128 ACTIVE</div>
+        </div>
+        <div class="frow">
+          <label>Recipient</label>
+          <select id="cRecipient"><option value="">Select recipient...</option></select>
+        </div>
+        <div class="frow">
+          <label>Message Category</label>
+          <select id="cCategory">
+            <!-- filled dynamically based on role -->
+          </select>
+        </div>
+        <div class="frow">
+          <label>Message Content</label>
+          <textarea id="cContent" placeholder="Type confidential message here..."></textarea>
+        </div>
+        <button class="btn-send" onclick="doSend()">🔐 Encrypt & Send</button>
+      </div>
+    </div>
+
+    <!-- ── INBOX ───────────────────────────────────────────────────────── -->
+    <div class="section" id="inbox">
+      <div class="inbox-box">
+        <div class="inbox-top">
+          <h2>📥 Secure Inbox</h2>
+          <span style="font-size:12px;color:var(--muted)">Click a message to open & decrypt</span>
+        </div>
+        <div class="msg-list" id="msgList"></div>
+      </div>
+    </div>
+
+    <!-- ── AUDIT (admin only) ─────────────────────────────────────────── -->
+    <div class="section" id="audit">
+      <div class="audit-box">
+        <div class="inbox-top">
+          <h2>🔍 Audit Log</h2>
+          <span style="font-size:12px;color:var(--muted)">Last 50 system events</span>
+        </div>
+        <table class="audit-table">
+          <thead><tr><th>#</th><th>User</th><th>Action</th><th>Details</th><th>Timestamp</th><th>Hash</th></tr></thead>
+          <tbody id="auditBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════════════════════════ MESSAGE MODAL ══════════════════════════════════ -->
+<div class="modal-bg" id="msgModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>📧 Message Detail</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta">
+        <span>👤 From: <strong id="mFrom">—</strong></span>
+        <span>🏷️ <span id="mCatWrap"></span></span>
+        <span>🕐 <span id="mTime">—</span></span>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:5px">Encrypted ciphertext (preview):</p>
+      <div class="enc-preview" id="mCipher"></div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:7px">Decrypted content:</p>
+      <div class="dec-content" id="mPlain">Click "Decrypt" to view the message.</div>
+      <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap">
+        <button class="btn-dec" onclick="doDecrypt()">🔓 Decrypt</button>
+        <div class="verify-badge" id="mVerify" style="display:none">✓ AES-128 VERIFIED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   CONFIG & STATE
+════════════════════════════════════════════════════════════════════ */
+const API = 'http://localhost:8000';
+
+// Role → allowed categories (mirrors backend ROLE_CATEGORIES)
+const ROLE_CATS = {
+    admin:            ['billing','transaction','customer','general'],
+    cashier:          ['billing','transaction'],
+    customer_support: ['customer','general']
+};
+const CAT_LABELS = {
+    billing:    '💳 Billing',
+    transaction:'💰 Transaction',
+    customer:   '🎧 Customer',
+    general:    '📋 General'
+};
+const ROLE_DESC = {
+    admin:            'Full access — all message categories, audit log, and key management.',
+    cashier:          'Cashier access — Billing and Transaction messages only. No access to customer/support communications.',
+    customer_support: 'Customer Support access — Customer and General messages only. No access to billing or financial data.'
+};
+
+let me = null;   // { username, role, key }
+let openMsgId = null;
+
+/* ════════════════════════════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('sc_session');
+    if (saved) { try { me = JSON.parse(saved); showApp(); loadStats(); } catch { localStorage.removeItem('sc_session'); } }
+
+    document.getElementById('lPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    document.getElementById('rConf').addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
+
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.addEventListener('click', () => goSection(el.getAttribute('data-sec')));
+    });
+    document.getElementById('msgModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('msgModal')) closeModal();
+    });
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   AUTH TABS
+════════════════════════════════════════════════════════════════════ */
+function switchTab(t) {
+    clearMsg();
+    document.getElementById('tabLogin').classList.toggle('active', t==='login');
+    document.getElementById('tabRegister').classList.toggle('active', t==='register');
+    document.getElementById('panelLogin').classList.toggle('active', t==='login');
+    document.getElementById('panelRegister').classList.toggle('active', t==='register');
+}
+function showMsg(txt, type) {
+    const el = document.getElementById('authMsg');
+    el.textContent = txt; el.className = `auth-msg ${type}`; el.style.display = 'block';
+}
+function clearMsg() { const el=document.getElementById('authMsg'); el.style.display='none'; el.textContent=''; }
+
+function showRoleInfo() {
+    const role = document.getElementById('rRole').value;
+    const box  = document.getElementById('roleInfoBox');
+    const msgs = {
+        cashier:          '💳 Can send/receive: Billing & Transaction messages only.',
+        customer_support: '🎧 Can send/receive: Customer & General messages only. No access to billing or financial data.'
+    };
+    if (role && msgs[role]) {
+        box.textContent = msgs[role];
+        box.className   = `role-info ${role}`;
+        box.style.display = 'block';
+    } else {
+        box.style.display = 'none';
+    }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   LOGIN
+════════════════════════════════════════════════════════════════════ */
+async function doLogin() {
+    const username = document.getElementById('lUser').value.trim();
+    const password = document.getElementById('lPass').value;
+    clearMsg();
+    if (!username || !password) { showMsg('Please fill in both fields.', 'error'); return; }
+
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+        const r = await fetch(`${API}/api/login`, { method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({username, password}) });
+        const d = await r.json();
+        if (d.success) {
+            me = { username: d.username, role: d.role, key: d.key };
+            localStorage.setItem('sc_session', JSON.stringify(me));
+            toast(`Welcome back, ${me.username}!`, 'success');
+            showApp(); loadStats();
+        } else { showMsg(d.message || 'Invalid credentials.', 'error'); }
+    } catch { showMsg('Cannot reach server. Is Flask running on port 8000?', 'error'); }
+    finally { btn.disabled=false; btn.textContent='🔐 Sign In'; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   REGISTER
+════════════════════════════════════════════════════════════════════ */
+async function doRegister() {
+    const username = document.getElementById('rUser').value.trim();
+    const role     = document.getElementById('rRole').value;
+    const password = document.getElementById('rPass').value;
+    const confirm  = document.getElementById('rConf').value;
+    clearMsg();
+
+    if (!username||!role||!password||!confirm) { showMsg('All fields are required.','error'); return; }
+    if (username.length<3)  { showMsg('Username must be ≥ 3 characters.','error'); return; }
+    if (password.length<6)  { showMsg('Password must be ≥ 6 characters.','error'); return; }
+    if (password!==confirm) { showMsg('Passwords do not match.','error'); return; }
+
+    const btn = document.getElementById('btnReg');
+    btn.disabled=true; btn.textContent='Creating account…';
+    try {
+        const r = await fetch(`${API}/api/register`, { method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({username, password, role}) });
+        const d = await r.json();
+        if (d.success) {
+            showMsg('✓ Account created! Switching to sign in…','success');
+            document.getElementById('lUser').value = username;
+            document.getElementById('rPass').value = '';
+            document.getElementById('rConf').value = '';
+            setTimeout(()=>switchTab('login'), 1200);
+        } else { showMsg(d.message||'Registration failed.','error'); }
+    } catch { showMsg('Cannot reach server.','error'); }
+    finally { btn.disabled=false; btn.textContent='🚀 Create Account'; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   APP SHELL
+════════════════════════════════════════════════════════════════════ */
+function showApp() {
+    document.getElementById('authWrap').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+
+    // Sidebar user info
+    document.getElementById('sideName').textContent = me.username;
+    document.getElementById('sideRole').textContent = me.role.replace('_',' ');
+    document.getElementById('wName').textContent    = me.username;
+    const av = document.getElementById('sideAvatar');
+    av.textContent  = me.username[0].toUpperCase();
+    av.className    = `avatar ${me.role}`;
+
+    // Role access description
+    document.getElementById('roleAccessDesc').textContent = ROLE_DESC[me.role] || '';
+
+    // Show admin-only elements
+    if (me.role==='admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display='flex');
+        document.getElementById('statUsersCard').style.display = 'block';
+    }
+
+    // Populate category dropdown on compose based on role
+    populateCategoryDropdown();
+    loadUsers();
+}
+
+function doSignout() {
+    localStorage.removeItem('sc_session');
+    location.reload();
+}
+
+function goSection(sec) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(sec).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n =>
+        n.classList.toggle('active', n.getAttribute('data-sec')===sec));
+    if (sec==='inbox')   loadInbox();
+    if (sec==='audit')   loadAudit();
+    if (sec==='compose') { loadUsers(); populateCategoryDropdown(); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════════════════════════ */
+async function loadStats() {
+    try {
+        const r = await fetch(`${API}/api/stats?username=${me.username}`);
+        const d = await r.json();
+        document.getElementById('statUnread').textContent = d.unread;
+        document.getElementById('statSent').textContent   = d.total_sent;
+        if (me.role==='admin') document.getElementById('statUsers').textContent = d.total_users;
+    } catch {}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   USERS (recipient dropdown)
+════════════════════════════════════════════════════════════════════ */
+async function loadUsers() {
+    try {
+        const r     = await fetch(`${API}/api/users`);
+        const users = await r.json();
+        const sel   = document.getElementById('cRecipient');
+        sel.innerHTML = '<option value="">Select recipient...</option>';
+        users.forEach(u => {
+            if (u.username!==me.username) {
+                const o = document.createElement('option');
+                o.value = u.username;
+                o.textContent = `${u.username}  (${u.role.replace('_',' ')})`;
+                sel.appendChild(o);
+            }
+        });
+    } catch {}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   CATEGORY DROPDOWN  (role-restricted)
+════════════════════════════════════════════════════════════════════ */
+function populateCategoryDropdown() {
+    const sel  = document.getElementById('cCategory');
+    const cats = ROLE_CATS[me.role] || ['general'];
+    sel.innerHTML = '';
+    cats.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = CAT_LABELS[c] || c;
+        sel.appendChild(o);
+    });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SEND MESSAGE
+════════════════════════════════════════════════════════════════════ */
+async function doSend() {
+    const to       = document.getElementById('cRecipient').value;
+    const category = document.getElementById('cCategory').value;
+    const content  = document.getElementById('cContent').value.trim();
+    if (!to)      { toast('Please select a recipient.','error'); return; }
+    if (!content) { toast('Message cannot be empty.','error'); return; }
+    try {
+        const r = await fetch(`${API}/api/messages/send`, { method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ from:me.username, to, content, category, key:me.key }) });
+        const d = await r.json();
+        if (d.success) {
+            toast('Message encrypted & sent!','success');
+            document.getElementById('cContent').value='';
+            loadStats();
+        } else { toast(d.error||'Send failed.','error'); }
+    } catch { toast('Network error.','error'); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   INBOX
+════════════════════════════════════════════════════════════════════ */
+async function loadInbox() {
+    try {
+        const r    = await fetch(`${API}/api/messages?username=${me.username}`);
+        const msgs = await r.json();
+        const list = document.getElementById('msgList');
+        list.innerHTML = '';
+        if (!msgs.length) { list.innerHTML='<div class="empty">📭 No messages in your inbox.</div>'; return; }
+        msgs.forEach(m => {
+            const row = document.createElement('div');
+            row.className = `msg-row ${!m.read?'unread':''}`;
+            row.onclick   = () => openMsg(m);
+            const cat  = m.category||'general';
+            const date = new Date(m.encrypted_data.timestamp).toLocaleString();
+            row.innerHTML = `
+              <div class="msg-id">#${m.id}</div>
+              <div class="msg-from">${m.from}</div>
+              <div><span class="cat-pill ${cat}">${cat}</span></div>
+              <div class="msg-time">${date}</div>
+              <div><span class="status-badge ${m.read?'read':'new'}">${m.read?'Read':'New'}</span></div>`;
+            list.appendChild(row);
+        });
+    } catch {}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════════════════════════════ */
+function openMsg(m) {
+    openMsgId = m.id;
+    const cat = m.category||'general';
+    document.getElementById('mFrom').textContent   = m.from;
+    document.getElementById('mCatWrap').innerHTML  = `<span class="cat-pill ${cat}">${cat}</span>`;
+    document.getElementById('mTime').textContent   = new Date(m.encrypted_data.timestamp).toLocaleString();
+    document.getElementById('mCipher').textContent = m.encrypted_data.ciphertext.substring(0,120)+'…';
+    document.getElementById('mPlain').textContent  = 'Click "Decrypt" to view the message.';
+    document.getElementById('mVerify').style.display = 'none';
+    document.getElementById('msgModal').classList.add('open');
+}
+function closeModal() { document.getElementById('msgModal').classList.remove('open'); openMsgId=null; }
+
+/* ════════════════════════════════════════════════════════════════════
+   DECRYPT
+════════════════════════════════════════════════════════════════════ */
+async function doDecrypt() {
+    if (!openMsgId) return;
+    try {
+        const r = await fetch(`${API}/api/messages/decrypt`, { method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ message_id:openMsgId, username:me.username, key:me.key }) });
+        const d = await r.json();
+        if (d.plaintext) {
+            document.getElementById('mPlain').textContent = d.plaintext;
+            document.getElementById('mVerify').style.display = 'flex';
+            toast('Decrypted successfully ✓','success');
+            loadInbox(); loadStats();
+        } else { toast(d.error||'Decryption failed.','error'); }
+    } catch { toast('Network error during decryption.','error'); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   AUDIT
+════════════════════════════════════════════════════════════════════ */
+async function loadAudit() {
+    try {
+        const r     = await fetch(`${API}/api/audit`);
+        const rows  = await r.json();
+        const tbody = document.getElementById('auditBody');
+        tbody.innerHTML = '';
+        rows.forEach(e => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${e.id}</td>
+              <td><strong>${e.user}</strong></td>
+              <td><span class="action-pill ${e.action}">${e.action}</span></td>
+              <td style="color:var(--muted);font-size:11px">${e.details}</td>
+              <td style="font-size:11px">${new Date(e.timestamp).toLocaleString()}</td>
+              <td class="hash">${e.hash}</td>`;
+            tbody.appendChild(tr);
+        });
+    } catch {}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   TOASTS
+════════════════════════════════════════════════════════════════════ */
+function toast(msg, type='info') {
+    const wrap = document.getElementById('toastWrap');
+    const el   = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span>${type==='success'?'✓':type==='error'?'✗':'ℹ'}</span><span>${msg}</span>`;
+    wrap.appendChild(el);
+    setTimeout(()=>el.remove(), 3500);
+}
+</script>
+</body>
+</html>

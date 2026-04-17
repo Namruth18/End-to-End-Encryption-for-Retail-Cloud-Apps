@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "from": "nam123",
+    "to": "admin",
+    "category": "billing",
+    "encrypted_data": {
+      "ciphertext": "gAAAAABp4gN9DsGn3I8HpWOmUgHRziqvyNWjMnpnQWLeYlKNsEqn_eE62JXc73X_Zy3ZVaeatOadxxy4UH-_sFDDmfN2d3dDqI9kkmtBJE_wv-Ae30dl6o1W6xVUQ0iH6A6Ngk3KasQo",
+      "timestamp": "2026-04-17T15:25:09.216380",
+      "algorithm": "Fernet-AES128-CBC-HMAC",
+      "category": "billing"
+    },
+    "read": true,
+    "read_at": "2026-04-17T15:25:52.430871"
+  }
+]
