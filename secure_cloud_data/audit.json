@@ -62,5 +62,85 @@
     "user": "admin",
     "details": "Successful authentication",
     "hash": "8550a355d50ab003"
+  },
+  {
+    "id": 9,
+    "timestamp": "2026-04-18T10:36:30.469351",
+    "action": "LOGIN",
+    "user": "admin",
+    "details": "Successful authentication",
+    "hash": "8550a355d50ab003"
+  },
+  {
+    "id": 10,
+    "timestamp": "2026-04-18T10:54:19.883636",
+    "action": "LOGIN",
+    "user": "admin",
+    "details": "Successful authentication",
+    "hash": "8550a355d50ab003"
+  },
+  {
+    "id": 11,
+    "timestamp": "2026-04-18T10:55:10.043498",
+    "action": "MESSAGE_SENT",
+    "user": "admin",
+    "details": "To:nam123 Cat:transaction ID:2",
+    "hash": "111c9fbd81866c71"
+  },
+  {
+    "id": 12,
+    "timestamp": "2026-04-18T10:55:22.888500",
+    "action": "MESSAGE_READ",
+    "user": "admin",
+    "details": "Message ID:1",
+    "hash": "90a81c5ef0c2991f"
+  },
+  {
+    "id": 13,
+    "timestamp": "2026-04-18T10:56:34.171877",
+    "action": "LOGIN",
+    "user": "nam123",
+    "details": "Successful authentication",
+    "hash": "60c4df9019de8ecf"
+  },
+  {
+    "id": 14,
+    "timestamp": "2026-04-18T10:57:22.725917",
+    "action": "MESSAGE_SENT",
+    "user": "nam123",
+    "details": "To:admin Cat:billing ID:3",
+    "hash": "a0eebef433de8a1a"
+  },
+  {
+    "id": 15,
+    "timestamp": "2026-04-18T10:57:36.849073",
+    "action": "MESSAGE_READ",
+    "user": "nam123",
+    "details": "Message ID:2",
+    "hash": "638cdc78746fd5d8"
+  },
+  {
+    "id": 16,
+    "timestamp": "2026-04-18T10:58:02.292006",
+    "action": "MESSAGE_READ",
+    "user": "nam123",
+    "details": "Message ID:2",
+    "hash": "638cdc78746fd5d8"
+  },
+  {
+    "id": 17,
+    "timestamp": "2026-04-18T10:58:55.165885",
+    "action": "LOGIN",
+    "user": "admin",
+    "details": "Successful authentication",
+    "hash": "8550a355d50ab003"
+  },
+  {
+    "id": 18,
+    "timestamp": "2026-04-18T10:59:08.350909",
+    "action": "MESSAGE_READ",
+    "user": "admin",
+    "details": "Message ID:3",
+    "hash": "ca895749a1c59b6f"
   }
 ]
