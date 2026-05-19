@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SecureCloud · E2EE Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<!-- QR code rendering library (client-side, no server dependency) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<!-- 3D CANVAS BACKGROUND -->
+<canvas id="canvas3d"></canvas>
+
+<!-- ════════ AUTH ══════════════════════════════════════════════════ -->
+<div id="authWrap">
+ <div class="auth-scene">
+  <div class="auth-card-3d">
+   <div class="auth-card">
+
+    <div class="logo-wrap">
+     <div class="logo-3d">
+      <div class="logo-face">
+       <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="#00d2ff" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M9 12l2 2 4-4" stroke="#00ff8c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+       </svg>
+      </div>
+     </div>
+     <h1>SECURE<span>CLOUD</span></h1>
+     <p>End-to-End Encrypted · Yenepoya University · 2026</p>
+    </div>
+
+    <div class="atabs">
+     <div class="atab on" id="tL" onclick="sw('login')">Sign In</div>
+     <div class="atab" id="tR" onclick="sw('register')">Register</div>
+    </div>
+
+    <div class="amsg" id="amsg"></div>
+
+    <div class="apanel on" id="pL">
+     <div class="fg"><label><svg class="lico" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>Username</label><input id="lU" type="text" placeholder="enter username" autocomplete="username"></div>
+     <div class="fg"><label><svg class="lico" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Password</label><input id="lP" type="password" placeholder="enter password"></div>
+     <div class="fg" id="tfaField" style="display:none"><label><svg class="lico" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>2FA Code</label><input id="lT" type="text" placeholder="000000" maxlength="6" style="letter-spacing:.25em;font-size:20px;text-align:center;font-family:'Orbitron',monospace"></div>
+     <button class="btn-primary" id="btnL" onclick="doLogin()">[ AUTHENTICATE ]</button>
+     <div class="cred-box">Default admin → <b>admin</b> / <b>admin123</b></div>
+    </div>
+
+    <div class="apanel" id="pR">
+     <div class="fg"><label><svg class="lico" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>Username</label><input id="rU" type="text" placeholder="letters, numbers, underscore" autocomplete="off"></div>
+     <div class="fg"><label><svg class="lico" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Password</label><input id="rP" type="password" placeholder="minimum 6 characters"></div>
+     <div class="fg"><label><svg class="lico" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Confirm Password</label><input id="rC" type="password" placeholder="repeat password"></div>
+     <button class="btn-primary" id="btnR" onclick="doReg()">[ CREATE ACCOUNT ]</button>
+    </div>
+
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- ════════ APP ═══════════════════════════════════════════════════ -->
+<div id="appShell">
+ <nav class="sidebar">
+  <div class="sb-head">
+   <div class="sb-brand">
+    <div class="sb-orb">
+     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="#00d2ff" stroke-width="1.8"/><path d="M9 12l2 2 4-4" stroke="#00ff8c" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </div>
+    <div><div class="sb-name">SECURECLOUD</div><div class="sb-sub">E2EE Terminal v2.0</div></div>
+   </div>
+  </div>
+  <div class="sb-status"><span class="pdot"></span>ALL SYSTEMS ONLINE</div>
+  <ul class="nav">
+   <li class="ni on" data-sec="dashboard"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></div>Dashboard</li>
+   <li class="ni" data-sec="compose"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Compose</li>
+   <li class="ni" data-sec="inbox"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.8"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.8"/></svg></div>Inbox<span class="ni-badge" id="inboxBadge" style="display:none">0</span></li>
+   <li class="ni" data-sec="files"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>Secure Files</li>
+   <li class="ni" data-sec="tfa"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="currentColor"/></svg></div>2FA Security</li>
+   <li class="ni" data-sec="sent"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="1.8"/><polygon points="22,2 15,22 11,13 2,9 22,2" stroke="currentColor" stroke-width="1.8"/></svg></div>Sent</li>
+   <li class="ni" data-sec="keyshare"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>Key Sharing<span class="ni-badge" id="keyShareBadge" style="display:none">0</span></li>
+
+   <li class="ni" data-sec="groups"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M23 21v-2a4 4 0 00-3-3.87" stroke="currentColor" stroke-width="1.8"/><path d="M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="1.8"/></svg></div>Groups<span class="ni-badge" id="groupsBadge" style="display:none">0</span></li>
+   <li class="ni admin-only" data-sec="usermgr" style="display:none"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M23 21v-2a4 4 0 00-3-3.87" stroke="currentColor" stroke-width="1.8"/><path d="M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="1.8"/></svg></div>Users</li>
+   <li class="ni admin-only" data-sec="audit" style="display:none"><div class="ni-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Audit Log</li>
+  </ul>
+  <div class="sb-foot">
+   <div class="ucard"><div class="uav" id="sbAv">?</div><div><div class="u-name" id="sbN">—</div><div class="u-role" id="sbR">—</div></div></div>
+   <button class="btn-so" onclick="doSignout()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="16,17 21,12 16,7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>TERMINATE SESSION</button>
+  </div>
+ </nav>
+
+ <main class="main">
+
+  <!-- ── DASHBOARD (NO AUDIT LOG) ─────────────────────────────────── -->
+  <div class="sec on" id="dashboard">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>system.overview</div><div class="pg-h1" id="wN">—</div></div>
+    <div class="sys-chip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>ALL SYSTEMS NOMINAL</div>
+   </div>
+   <div class="access-banner" id="accessBanner">
+    <div class="ab-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="#00d2ff" stroke-width="1.8"/><path d="M9 12l2 2 4-4" stroke="#00ff8c" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+    <div><div class="ab-label">Access Level</div><div class="ab-desc" id="accessDesc">—</div></div>
+   </div>
+   <div class="stat-grid">
+    <div class="sc3d" style="--sc-c:#00d2ff;--sc-glow:rgba(0,210,255,.3)">
+     <div class="sc-top"><span class="sc-lbl">Unread Messages</span><div class="sc-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.8"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.8"/></svg></div></div>
+     <div class="sc-val" id="dUnread">0</div><div class="sc-sub">Encrypted messages pending</div>
+    </div>
+    <div class="sc3d" style="--sc-c:#00ff8c;--sc-glow:rgba(0,255,140,.3)">
+     <div class="sc-top"><span class="sc-lbl">Messages Sent</span><div class="sc-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="1.8"/><polygon points="22,2 15,22 11,13 2,9 22,2" stroke="currentColor" stroke-width="1.8"/></svg></div></div>
+     <div class="sc-val" style="color:#00ff8c;text-shadow:0 0 30px rgba(0,255,140,.3)" id="dSent">0</div><div class="sc-sub">Encrypted transmissions</div>
+    </div>
+    <div class="sc3d" style="--sc-c:#ff6a00;--sc-glow:rgba(255,106,0,.3)">
+     <div class="sc-top"><span class="sc-lbl">Secure Files</span><div class="sc-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="1.8"/><polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="1.8"/></svg></div></div>
+     <div class="sc-val" style="color:#ff6a00;text-shadow:0 0 30px rgba(255,106,0,.3)" id="dFiles">0</div><div class="sc-sub">AES-128 encrypted vault</div>
+    </div>
+    <div class="sc3d admin-only" style="display:none;--sc-c:#b347ff;--sc-glow:rgba(179,71,255,.3)" id="usersCard">
+     <div class="sc-top"><span class="sc-lbl">Registered Users</span><div class="sc-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/></svg></div></div>
+     <div class="sc-val" style="color:#b347ff;text-shadow:0 0 30px rgba(179,71,255,.3)" id="dUsers">0</div><div class="sc-sub">Platform accounts</div>
+    </div>
+   </div>
+   <!-- Security protocol info -->
+   <div class="smeta">
+    <div class="smi"><strong>Encryption</strong><span>Fernet AES-128-CBC + HMAC-SHA256</span></div>
+    <div class="smi"><strong>Key Model</strong><span>Single shared symmetric key</span></div>
+    <div class="smi"><strong>KDF</strong><span>PBKDF2-SHA256 · 200,000 iterations</span></div>
+    <div class="smi"><strong>Storage</strong><span>SQLite · zero plaintext at rest</span></div>
+    <div class="smi"><strong>Integrity</strong><span>HMAC tag on every message & file</span></div>
+    <div class="smi"><strong>Auth</strong><span>Session token + optional TOTP 2FA</span></div>
+   </div>
+   <!-- Quick actions — NO audit log, NO key manager -->
+   <div class="qa-grid">
+    <div class="qa" style="--qc:#00d2ff;--qglow:rgba(0,210,255,.15)" onclick="goS('compose')"><div class="qa-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.8"/></svg></div><div class="qa-lbl">Compose</div><div class="qa-sub">Send encrypted message</div></div>
+    <div class="qa" style="--qc:#b347ff;--qglow:rgba(179,71,255,.15)" onclick="goS('inbox')"><div class="qa-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.8"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.8"/></svg></div><div class="qa-lbl">Inbox</div><div class="qa-sub">Decrypt messages</div></div>
+    <div class="qa" style="--qc:#ff6a00;--qglow:rgba(255,106,0,.15)" onclick="goS('files')"><div class="qa-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="1.8"/><path d="M12 18v-6M9 15l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="qa-lbl">Files</div><div class="qa-sub">Encrypted vault</div></div>
+    <div class="qa" style="--qc:#b347ff;--qglow:rgba(179,71,255,.15)" onclick="goS('tfa')"><div class="qa-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="qa-lbl">2FA Security</div><div class="qa-sub">TOTP authentication</div></div>
+   </div>
+  </div>
+
+  <!-- ── COMPOSE ────────────────────────────────────────────────────── -->
+  <div class="sec" id="compose">
+   <div class="compose-outer">
+    <div class="compose-3d">
+     <div class="compose-pnl">
+      <div class="compose-hdr">
+       <span class="enc-chip"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="currentColor" stroke-width="2.5"/></svg>AES-128 ACTIVE</span>
+       <h2>Compose Secure Message</h2>
+       <p>// encrypted with Fernet key · HMAC integrity · stored as ciphertext only</p>
+      </div>
+      <div class="frow"><label><span class="lbdot"></span>Recipient</label><div class="csel"><select id="cRec"><option value="">-- select recipient --</option></select></div></div>
+      <div class="frow" id="catRow">
+       <label><span class="lbdot" style="background:var(--c5)"></span>Category <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400">(required · based on your role)</span></label>
+       <div class="cat-row" id="catPills"></div>
+       <input type="hidden" id="cCat" value="">
+      </div>
+      <div class="frow"><label><span class="lbdot"></span>Message Content</label><textarea id="cMsg" placeholder="// type confidential message here..."></textarea></div>
+      <div class="frow">
+       <label><span class="lbdot" style="background:var(--c3)"></span>Attach File / Photo <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400">(optional · image or document · max 5 MB)</span></label>
+       <div class="att-zone" id="attZone" onclick="document.getElementById('attFileIn').click()" ondragover="event.preventDefault();this.classList.add('has-file')" ondragleave="this.classList.remove('has-file')" ondrop="onAttDrop(event)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="color:var(--c1);opacity:.55;margin:0 auto 5px;display:block"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted)">DRAG & DROP or click — photo / document / any file</div>
+        <div class="att-filename" id="attFilename"></div>
+        <button class="att-clear-btn" id="attClearBtn" onclick="clearAttachment(event)">✕ REMOVE</button>
+       </div>
+       <input type="file" id="attFileIn" style="display:none" onchange="onAttSelect(this.files[0])">
+      </div>
+      <button class="btn-send" id="btnSend" onclick="doSend()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>[ ENCRYPT &amp; TRANSMIT ]</button>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <!-- ── INBOX ──────────────────────────────────────────────────────── -->
+  <div class="sec" id="inbox">
+   <div class="pg-head"><div><div class="pg-eyebrow"><span>›</span>inbox.encrypted_messages</div><div class="pg-h1">Secure Inbox</div></div>
+    <button class="btn-refresh" onclick="loadInbox()"><span><span class="r-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>SYNC</span></button>
+   </div>
+   <div class="pnl" style="--pnl-c:#00d2ff">
+    <div class="pnl-h"><div class="pnl-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="2"/></svg>ENCRYPTED MESSAGES</div><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em">CLICK TO DECRYPT</span></div>
+    <div class="tbl-head-row-ext"><span class="tbl-hcell">#ID</span><span class="tbl-hcell">Sender</span><span class="tbl-hcell">Category</span><span class="tbl-hcell">Timestamp</span><span class="tbl-hcell">Status</span><span class="tbl-hcell">Shared Key</span></div>
+    <div id="msgList" style="max-height:520px;overflow-y:auto"></div>
+   </div>
+  </div>
+
+  <!-- ── SECURE FILES ────────────────────────────────────────────────── -->
+  <div class="sec" id="files">
+   <div class="pg-head"><div><div class="pg-eyebrow"><span>›</span>files.encrypted_vault</div><div class="pg-h1">Secure File Vault</div></div>
+    <button class="btn-refresh" onclick="loadFiles()"><span><span class="r-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>SYNC VAULT</span></button>
+   </div>
+   <div class="pnl" style="--pnl-c:#ff6a00;margin-bottom:16px">
+    <div class="pnl-h"><div class="pnl-title" style="color:#ff6a00"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2"/><polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="2"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2"/></svg>UPLOAD &amp; ENCRYPT</div></div>
+    <div style="padding:18px 20px">
+     <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+      <svg class="dz-icon" width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="1.5"/><polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.5"/></svg>
+      <p>DRAG &amp; DROP FILE · or click to browse<br><b>Encrypted with AES-128 before storage</b> · Max 10 MB</p>
+     </div>
+     <input type="file" id="fi" style="display:none" onchange="uploadFile(this.files[0])">
+    </div>
+   </div>
+   <div class="pnl" style="--pnl-c:#ff6a00">
+    <div class="pnl-h"><div class="pnl-title" style="color:#ff6a00"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="2"/><polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/></svg>ENCRYPTED VAULT</div></div>
+    <div style="display:grid;grid-template-columns:1fr 70px 105px 100px;gap:12px;padding:8px 20px;border-bottom:1px solid var(--border)"><span class="tbl-hcell">Filename</span><span class="tbl-hcell">Size</span><span class="tbl-hcell">Uploaded</span><span class="tbl-hcell">Action</span></div>
+    <div id="fileList" style="max-height:380px;overflow-y:auto"></div>
+   </div>
+  </div>
+
+  <!-- ── 2FA SECURITY — QR FULL PAGE ──────────────────────────────────── -->
+  <div class="sec" id="tfa">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>security.two_factor_auth</div><div class="pg-h1">Two-Factor Authentication</div></div>
+   </div>
+
+   <!-- Big hero 2FA card -->
+   <div class="tfa-hero">
+
+    <!-- ── Left column: animated shield + app list ── -->
+    <div class="tfa-visual">
+     <div class="tfa-shield-wrap">
+      <div class="tfa-shield-ring r1"></div>
+      <div class="tfa-shield-ring r2"></div>
+      <div class="tfa-shield-ring r3"></div>
+      <div class="tfa-shield-core">
+       <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="url(#sg1)" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M9 12l2 2 4-4" stroke="#00ff8c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs><linearGradient id="sg1" x1="4" y1="2" x2="20" y2="23" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff"/><stop offset="1" stop-color="#b347ff"/></linearGradient></defs>
+       </svg>
+      </div>
+     </div>
+     <div class="tfa-visual-title">TOTP SECURITY</div>
+     <div class="tfa-visual-sub">Time-Based One-Time Password</div>
+     <div class="tfa-info-pills">
+      <div class="tip">RFC 6238</div>
+      <div class="tip">SHA-1 HMAC</div>
+      <div class="tip">30s Window</div>
+      <div class="tip">6-Digit Code</div>
+     </div>
+     <div class="tfa-compat">
+      <div class="tfa-compat-label">COMPATIBLE WITH</div>
+      <div class="tfa-apps">
+       <div class="tfa-app">Google Authenticator</div>
+       <div class="tfa-app">Authy</div>
+       <div class="tfa-app">Microsoft Auth</div>
+       <div class="tfa-app">1Password</div>
+      </div>
+     </div>
+    </div>
+
+    <!-- ── Right column: controls ── -->
+    <div class="tfa-controls">
+
+     <!-- Status bar -->
+     <div id="tfaStatusBar"></div>
+
+     <!-- How-it-works steps (hidden during setup) -->
+     <div class="tfa-steps" id="tfaSteps">
+      <div class="tfa-step"><div class="ts-num">01</div><div><div class="ts-title">Generate Secret</div><div class="ts-desc">A unique TOTP secret key is generated and bound to your account</div></div></div>
+      <div class="tfa-step"><div class="ts-num">02</div><div><div class="ts-title">Scan QR Code</div><div class="ts-desc">Open your authenticator app and scan the QR code displayed</div></div></div>
+      <div class="tfa-step"><div class="ts-num">03</div><div><div class="ts-title">Verify &amp; Enable</div><div class="ts-desc">Enter the 6-digit code shown in your app to confirm setup</div></div></div>
+      <div class="tfa-step"><div class="ts-num">04</div><div><div class="ts-title">Secure Login</div><div class="ts-desc">Every login now requires your rotating 6-digit OTP code</div></div></div>
+     </div>
+
+     <!-- ── QR SETUP BOX (shown after clicking Setup) ── -->
+     <div id="tfaSetupBox" style="display:none">
+      <div class="tfa-setup-inner">
+
+       <!-- Step indicator -->
+       <div class="tfa-setup-steps-bar">
+        <div class="tfa-setup-step active" id="tfaStep1"><span>1</span> Generate</div>
+        <div class="tfa-step-connector"></div>
+        <div class="tfa-setup-step" id="tfaStep2"><span>2</span> Scan QR</div>
+        <div class="tfa-step-connector"></div>
+        <div class="tfa-setup-step" id="tfaStep3"><span>3</span> Verify</div>
+       </div>
+
+       <!-- QR Code display panel -->
+       <div class="tfa-qr-panel" id="tfaQrPanel">
+        <div class="tfa-qr-heading">
+         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><path d="M14 14h2v2h-2zM18 14h3v2h-3zM14 18h3v3h-3zM19 18h2v3h-2z" fill="currentColor"/></svg>
+         SCAN WITH YOUR AUTHENTICATOR APP
+        </div>
+        <!-- QR canvas rendered by qrcode.js -->
+        <div class="tfa-qr-wrap">
+         <div class="tfa-qr-frame" id="tfaQrFrame">
+          <div class="tfa-qr-loading" id="tfaQrLoading">
+           <div class="tfa-qr-spinner"></div>
+           <div>Generating QR code...</div>
+          </div>
+          <canvas id="tfaQrCanvas" style="display:none;border-radius:8px"></canvas>
+         </div>
+         <div class="tfa-qr-caption">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+          Point your authenticator app camera at this QR code
+         </div>
+        </div>
+       </div>
+
+       <!-- Manual secret fallback -->
+       <div class="tfa-secret-panel">
+        <div class="tfa-secret-label">
+         <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+         CAN'T SCAN? ENTER MANUALLY
+        </div>
+        <div class="tfa-secret-row">
+         <div class="secret-box" id="tfaSecret" onclick="copySecret()"></div>
+         <button class="tfa-copy-btn" onclick="copySecret()" title="Copy secret">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/></svg>
+         </button>
+        </div>
+        <div class="tfa-secret-hint">// click to copy · enter this key manually in your authenticator app</div>
+       </div>
+
+       <!-- Verify step -->
+       <div class="tfa-verify-section">
+        <div class="slbl" style="color:var(--c2);margin-bottom:10px">// step 3 — enter the 6-digit code shown in your app</div>
+        <div class="tfa-code-row">
+         <input class="tfa-code-input" id="tfaCode" type="text" placeholder="000000"
+                maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                oninput="onTfaCodeInput(this)"
+                onkeydown="if(event.key==='Enter')verify2FA()">
+         <button class="btn-tfa-verify" onclick="verify2FA()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          VERIFY &amp; ENABLE
+         </button>
+        </div>
+        <div class="tfa-code-hint" id="tfaCodeHint">Enter the 6-digit rotating code from Google Authenticator or any TOTP app</div>
+       </div>
+
+      </div>
+     </div>
+
+     <!-- ── Action buttons ── -->
+     <div class="tfa-actions">
+      <button class="btn-tfa-setup" id="btnSetup" onclick="setup2FA()">
+       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="currentColor"/></svg>
+       SETUP TWO-FACTOR AUTH
+      </button>
+      <button class="btn-tfa-disable" id="btnDisable" onclick="disable2FA()" style="display:none">
+       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+       DISABLE 2FA
+      </button>
+     </div>
+
+    </div><!-- end tfa-controls -->
+   </div><!-- end tfa-hero -->
+  </div>
+
+    <!-- ── SENT MESSAGES ─────────────────────────────────────────────────────── -->
+  <div class="sec" id="sent">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>sent.outbox</div><div class="pg-h1">Sent Messages</div></div>
+    <button class="btn-refresh" onclick="loadSent()"><span><span class="r-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>SYNC</span></button>
+   </div>
+   <div class="pnl" style="--pnl-c:#00ff8c">
+    <div class="pnl-h"><div class="pnl-title" style="color:var(--c2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="2"/><polygon points="22,2 15,22 11,13 2,9 22,2" stroke="currentColor" stroke-width="2"/></svg>OUTBOX — YOUR SENT MESSAGES</div></div>
+    <div class="tbl-head-sent"><span class="tbl-hcell">#ID</span><span class="tbl-hcell">To</span><span class="tbl-hcell">Category</span><span class="tbl-hcell">Sent At</span><span class="tbl-hcell">Attach</span></div>
+    <div id="sentList" style="max-height:520px;overflow-y:auto"></div>
+   </div>
+  </div>
+
+  <!-- ── KEY MANAGER (admin only) ───────────────────────────────────────────── -->
+  <div class="sec admin-only" id="keys" style="display:none">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>admin.key_management</div><div class="pg-h1">Encryption Key Manager</div></div>
+    <div style="display:flex;gap:8px">
+     <button class="btn-refresh" onclick="goS('dashboard')"><span>← BACK</span></button>
+     <button class="btn-refresh" onclick="rotateKey()"><span><span class="r-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>ROTATE KEY</span></button>
+    </div>
+   </div>
+   <div class="pnl" style="--pnl-c:#ffd600">
+    <div class="pnl-h"><div class="pnl-title" style="color:var(--c5)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>ACTIVE &amp; HISTORICAL KEYS</div></div>
+    <div class="key-manager-grid" id="keyGrid"></div>
+   </div>
+   <!-- Key sharing panel -->
+   <div class="pnl" style="--pnl-c:#b347ff;margin-top:16px">
+    <div class="pnl-h"><div class="pnl-title" style="color:var(--c4)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="16,6 12,2 8,6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="2" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>SHARE A KEY WITH A USER</div></div>
+    <div style="padding:18px 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+     <div style="flex:1;min-width:160px"><div class="slbl">Generate New Key</div><button class="btn btn-c4" onclick="genAndShareKey()" style="width:100%;padding:10px">GENERATE KEY</button></div>
+     <div style="flex:1;min-width:200px"><div class="slbl">Generated Key (copy it)</div><input class="ifield" id="genKeyOut" placeholder="// click Generate Key above" readonly style="font-family:'JetBrains Mono',monospace;font-size:11px;cursor:text"></div>
+     <div style="flex:1;min-width:140px"><div class="slbl">Share With User</div><div class="csel"><select id="shareToUser"><option value="">-- pick user --</option></select></div></div>
+     <div style="flex:1;min-width:130px"><div class="slbl">Key Name</div><input class="ifield" id="shareKeyName" placeholder="e.g. team-key-1" value="shared-key"></div>
+     <div style="flex:0"><button class="btn btn-c4" onclick="doShareKey()" style="padding:10px 16px">SHARE →</button></div>
+    </div>
+    <div class="pnl-h" style="border-top:1px solid var(--border)"><div class="pnl-title" style="color:var(--c4)">KEYS SHARED WITH ME</div><button class="btn btn-c4" onclick="loadSharedKeys()" style="font-size:9px;padding:6px 12px">REFRESH</button></div>
+    <div id="sharedKeysList" style="padding:10px 20px;max-height:220px;overflow-y:auto"></div>
+   </div>
+  </div>
+
+
+  <!-- ── KEY SHARING (all users) ───────────────────────────────────────────── -->
+  <div class="sec" id="keyshare">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>security.key_sharing</div><div class="pg-h1">Key Sharing</div></div>
+    <button class="btn-refresh" onclick="loadKeySharePage()"><span><span class="r-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>REFRESH</span></button>
+   </div>
+
+   <!-- Share a key panel -->
+   <div class="pnl" style="--pnl-c:#00d2ff">
+    <div class="pnl-h">
+     <div class="pnl-title" style="color:var(--c1)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="16,6 12,2 8,6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="2" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      SHARE AN ENCRYPTION KEY
+     </div>
+    </div>
+    <div class="ks-form-grid">
+     <div class="ks-form-col">
+      <div class="slbl">Step 1 — Select Receiver</div>
+      <div class="csel"><select id="ksReceiver" onchange="ksUpdateStatus()"><option value="">-- select user --</option></select></div>
+     </div>
+     <div class="ks-form-col">
+      <div class="slbl">Step 2 — Select Key Source</div>
+      <div class="ks-key-tabs">
+       <button class="ks-tab on" id="ksTabGen" onclick="ksSetTab('gen')">Generate New</button>
+       <button class="ks-tab" id="ksTabSys" onclick="ksSetTab('sys')" style="display:none" id="ksTabSysBtn">System Key (Admin)</button>
+      </div>
+     </div>
+     <div class="ks-form-col ks-span2" id="ksGenPanel">
+      <div class="slbl">Step 3 — Generate &amp; Name the Key</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+       <div style="flex:1;min-width:180px">
+        <input class="ifield" id="ksKeyName" placeholder="e.g. team-alpha-key" value="shared-key">
+       </div>
+       <button class="btn btn-c1" onclick="ksGenerateKey()" style="padding:10px 18px;white-space:nowrap">⚡ GENERATE KEY</button>
+      </div>
+      <div class="ks-key-preview" id="ksKeyPreview" style="display:none">
+       <div class="slbl" style="margin-top:12px;color:var(--c2)">// generated key — copy for your records</div>
+       <div class="ks-key-value" id="ksKeyValue" onclick="ksSelectAll(this)"></div>
+       <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">// click to select all · this key will be shared securely via the server</div>
+      </div>
+     </div>
+     <div class="ks-form-col ks-span2" id="ksSysPanel" style="display:none">
+      <div class="slbl">Step 3 — Choose System Encryption Key</div>
+      <div class="csel"><select id="ksSysKeyId"><option value="">-- loading system keys... --</option></select></div>
+     </div>
+    </div>
+    <div class="ks-share-footer">
+     <div class="ks-status-line" id="ksStatusLine"></div>
+     <button class="ks-share-btn" id="ksShareBtn" onclick="ksDoShare()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="16,6 12,2 8,6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="2" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      SHARE KEY
+     </button>
+    </div>
+   </div>
+
+   <!-- Outgoing shared keys -->
+   <div class="pnl" style="--pnl-c:#00ff8c;margin-top:16px">
+    <div class="pnl-h">
+     <div class="pnl-title" style="color:var(--c2)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="1.8"/><polygon points="22,2 15,22 11,13 2,9 22,2" stroke="currentColor" stroke-width="1.8"/></svg>
+      KEYS YOU HAVE SHARED
+     </div>
+    </div>
+    <div class="ks-table-head ks-table-head-5"><span>Key Name</span><span>Shared With</span><span>Shared At</span><span>Status</span><span>Action</span></div>
+    <div id="ksOutgoing" style="max-height:240px;overflow-y:auto">
+     <div class="empty-st">// loading...</div>
+    </div>
+   </div>
+
+   <!-- Incoming shared keys -->
+   <div class="pnl" style="--pnl-c:#b347ff;margin-top:16px">
+    <div class="pnl-h">
+     <div class="pnl-title" style="color:var(--c4)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      INCOMING SHARED KEYS — REQUESTS FOR YOU
+     </div>
+    </div>
+    <div class="ks-table-head ks-table-head-5"><span>Key Name</span><span>From</span><span>Received</span><span>Status / Action</span><span>Delete</span></div>
+    <div id="ksIncoming" style="max-height:240px;overflow-y:auto">
+     <div class="empty-st">// loading...</div>
+    </div>
+   </div>
+
+   <!-- Decrypt with shared key panel -->
+   <div class="pnl" style="--pnl-c:#ffd600;margin-top:16px" id="ksDecryptPanel" style="display:none">
+    <div class="pnl-h">
+     <div class="pnl-title" style="color:var(--c5)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      DECRYPT WITH SHARED KEY
+     </div>
+    </div>
+    <div style="padding:18px 20px">
+     <!-- How-to hint -->
+     <div class="ks-decrypt-hint">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+      <span>Go to your <b>Inbox</b>, click the <b>⚷ USE SHARED KEY</b> button on any message — it will auto-fill the ciphertext below. Or paste it manually.</span>
+     </div>
+     <!-- Source message info strip (filled by JS when coming from Inbox) -->
+     <div class="ks-msg-source" id="ksMsgSource" style="display:none">
+      <div class="ks-msg-source-inner">
+       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="2"/></svg>
+       <span id="ksMsgSourceText">—</span>
+       <button class="ks-msg-clear-btn" onclick="ksClearMsgSource()" title="Clear">✕</button>
+      </div>
+     </div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+       <div class="slbl">Selected Shared Key</div>
+       <div class="csel"><select id="ksDecryptKeyId"><option value="">-- select an accepted key --</option></select></div>
+      </div>
+      <div>
+       <div class="slbl">Ciphertext Source</div>
+       <div class="ks-cipher-src-row">
+        <div class="ks-cipher-src-indicator" id="ksCipherSrcInd">
+         <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.8"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.8"/></svg>
+         <span id="ksCipherSrcLabel">// no message selected</span>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="slbl">Ciphertext <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:9px">(auto-filled from inbox or paste manually)</span></div>
+     <textarea class="ifield" id="ksDecryptCipher" placeholder="// click ⚷ USE SHARED KEY on an inbox message, or paste Fernet ciphertext here (gAAAAAB...)" style="min-height:90px;font-family:'JetBrains Mono',monospace;font-size:10px;margin-bottom:12px" oninput="ksOnCipherInput()"></textarea>
+     <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn btn-c5" onclick="ksDecryptMsg()" style="padding:10px 24px">[ DECRYPT ]</button>
+      <button class="btn" onclick="ksClearDecrypt()" style="padding:10px 16px;border-color:var(--border);color:var(--muted)">CLEAR</button>
+      <div class="ks-dec-status" id="ksDecStatus"></div>
+     </div>
+     <div class="slbl" style="color:var(--c2)">// decrypted plaintext</div>
+     <div class="plain-box" id="ksDecryptResult" style="min-height:60px">// awaiting decryption...</div>
+    </div>
+   </div>
+
+  </div>
+
+
+  <!-- ── GROUPS — Encrypted Group Messaging ─────────────────────────────────── -->
+  <div class="sec" id="groups" style="display:none">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>groups.encrypted_chat</div><div class="pg-h1">Encrypted Groups</div></div>
+    <button class="btn-refresh" onclick="loadGroups()"><span><span class="r-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>REFRESH</span></button>
+   </div>
+
+   <!-- Create Group Panel — ADMIN ONLY -->
+   <div class="grp-create-card admin-only" id="grpCreateCard" style="display:none;margin-bottom:20px">
+    <div class="grp-create-inner">
+     <!-- Left: header + form -->
+     <div class="grp-create-left">
+      <div class="grp-create-badge">
+       <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+       ADMIN ONLY
+      </div>
+      <h2 class="grp-create-title">Create Encrypted Group</h2>
+      <p class="grp-create-sub">// Fernet AES-128 key generated per group · HMAC-SHA256 integrity · zero plaintext stored</p>
+
+      <div class="grp-create-form">
+       <div class="grp-field">
+        <label class="grp-field-label">
+         <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2"/></svg>
+         Group Name
+        </label>
+        <input class="grp-field-input" id="grpName" type="text" placeholder="e.g. Finance Team, Dev Squad..." maxlength="48">
+        <div class="grp-field-hint">Choose a clear, descriptive name for the group</div>
+       </div>
+
+       <div class="grp-field">
+        <label class="grp-field-label">
+         <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/></svg>
+         Select Members
+         <span class="grp-field-sub">Click names to add · click tags to remove</span>
+        </label>
+        <!-- Tag-based member picker — replaces <select multiple> -->
+        <div class="grp-tag-picker" id="grpTagPicker">
+         <div class="grp-tag-selected" id="grpTagSelected">
+          <span class="grp-tag-placeholder">// no members added yet</span>
+         </div>
+         <div class="grp-tag-dropdown" id="grpTagDropdown"></div>
+        </div>
+        <!-- Hidden input stores selected values for createGroup() -->
+        <select id="grpMembers" multiple style="display:none"></select>
+       </div>
+      </div>
+
+      <div class="grp-create-actions">
+       <button class="grp-create-btn" onclick="createGroup()">
+        <span class="grp-create-btn-icon">
+         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <span>Create Encrypted Group</span>
+        <span class="grp-create-btn-arrow">→</span>
+       </button>
+       <div id="grpCreateStatus" class="grp-create-status"></div>
+      </div>
+     </div>
+
+     <!-- Right: security info cards -->
+     <div class="grp-create-right">
+      <div class="grp-sec-card">
+       <div class="grp-sec-icon" style="background:rgba(0,210,255,.12);border-color:rgba(0,210,255,.25);color:var(--c1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+       </div>
+       <div>
+        <div class="grp-sec-title">Unique AES Key</div>
+        <div class="grp-sec-desc">Each group gets its own Fernet AES-128-CBC key generated at creation time</div>
+       </div>
+      </div>
+      <div class="grp-sec-card">
+       <div class="grp-sec-icon" style="background:rgba(0,255,140,.1);border-color:rgba(0,255,140,.25);color:var(--c2)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+       </div>
+       <div>
+        <div class="grp-sec-title">HMAC Integrity</div>
+        <div class="grp-sec-desc">Every message is signed with HMAC-SHA256 to detect any tampering</div>
+       </div>
+      </div>
+      <div class="grp-sec-card">
+       <div class="grp-sec-icon" style="background:rgba(179,71,255,.1);border-color:rgba(179,71,255,.25);color:var(--c4)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M23 21v-2a4 4 0 00-3-3.87" stroke="currentColor" stroke-width="1.8"/><path d="M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="1.8"/></svg>
+       </div>
+       <div>
+        <div class="grp-sec-title">Key Rotation</div>
+        <div class="grp-sec-desc">Removing a member auto-rotates the key — ejected users cannot read future messages</div>
+       </div>
+      </div>
+      <div class="grp-sec-card">
+       <div class="grp-sec-icon" style="background:rgba(255,106,0,.1);border-color:rgba(255,106,0,.25);color:var(--c3)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+       </div>
+       <div>
+        <div class="grp-sec-title">Zero Plaintext</div>
+        <div class="grp-sec-desc">No readable messages ever stored in the database — ciphertext only</div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+
+   <!-- My Groups List -->
+   <div class="pnl" style="--pnl-c:#00ff8c">
+    <div class="pnl-h">
+     <div class="pnl-title" style="color:var(--c2)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M23 21v-2a4 4 0 00-3-3.87" stroke="currentColor" stroke-width="1.8"/><path d="M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="1.8"/></svg>
+      MY ENCRYPTED GROUPS
+     </div>
+    </div>
+    <div class="grp-list-head"><span>#</span><span>Group Name</span><span>Created By</span><span>Members</span><span>Messages</span><span>Actions</span></div>
+    <div id="grpList" style="max-height:320px;overflow-y:auto">
+     <div class="empty-st">// loading groups...</div>
+    </div>
+   </div>
+
+   <!-- Group Chat Panel (shown when a group is opened) -->
+   <div id="grpChatPanel" style="display:none;margin-top:16px">
+    <div class="pnl" style="--pnl-c:#b347ff">
+     <div class="pnl-h" style="display:flex;justify-content:space-between;align-items:center">
+      <div class="pnl-title" style="color:var(--c4)">
+       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+       <span id="grpChatTitle">GROUP CHAT</span>
+       <span class="grp-enc-chip">AES-128 ENCRYPTED</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+       <button class="grp-mgr-btn" id="grpMgrToggle" onclick="toggleGrpMgr()">⚙ MANAGE</button>
+       <button class="grp-close-btn" onclick="closeGroupChat()">✕ CLOSE</button>
+      </div>
+     </div>
+
+     <!-- Member management panel (collapsible) -->
+     <div id="grpMgrPanel" style="display:none;padding:14px 20px;border-bottom:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+       <div>
+        <div class="slbl" style="color:var(--c4)">Current Members</div>
+        <div id="grpMemberList" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);max-height:120px;overflow-y:auto;padding:8px 0"></div>
+       </div>
+       <div>
+        <div class="slbl" style="color:var(--c2)">Add Member</div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+         <select class="ifield" id="grpAddUser" style="flex:1"></select>
+         <button class="btn btn-c2-sm" onclick="addGroupMember()">ADD</button>
+        </div>
+        <div style="margin-top:12px">
+         <div class="slbl" style="color:var(--danger)">Remove Member</div>
+         <div style="display:flex;gap:8px;margin-top:6px">
+          <select class="ifield" id="grpRemoveUser" style="flex:1"></select>
+          <button class="btn btn-danger-sm" onclick="removeGroupMember()">REMOVE</button>
+         </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+         <button class="btn btn-danger-sm" style="flex:1" onclick="deleteGroup()">🗑 DELETE GROUP</button>
+         <button class="btn btn-warn-sm" style="flex:1" onclick="leaveGroup()">↩ LEAVE</button>
+        </div>
+       </div>
+      </div>
+      <div id="grpMgrStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px"></div>
+     </div>
+
+     <!-- Messages area -->
+     <div id="grpMessages" class="grp-chat-zone">
+      <div class="empty-st">// no messages yet — send the first encrypted message</div>
+     </div>
+
+     <!-- Group file attachment preview -->
+     <div id="grpAttPreview" style="display:none;padding:6px 18px 0;display:none">
+      <div class="grp-att-preview-bar">
+       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+       <span id="grpAttName">file.png</span>
+       <span id="grpAttSize" style="color:var(--muted);font-size:9px"></span>
+       <button class="grp-att-clear-btn" onclick="clearGrpAttachment()">✕</button>
+      </div>
+     </div>
+     <!-- Send message -->
+     <div class="grp-send-bar">
+      <button class="grp-att-btn" title="Attach file / photo / document" onclick="document.getElementById('grpAttFileIn').click()">
+       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <input type="file" id="grpAttFileIn" style="display:none" onchange="onGrpAttSelect(this.files[0])">
+      <input class="ifield grp-msg-input" id="grpMsgInput" type="text" placeholder="// type encrypted message... (Enter to send)"
+             onkeydown="if(event.key==='Enter')sendGroupMessage()">
+      <button class="grp-send-btn" onclick="sendGroupMessage()">
+       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="2"/><polygon points="22,2 15,22 11,13 2,9 22,2" fill="currentColor"/></svg>
+       SEND ENCRYPTED
+      </button>
+     </div>
+    </div>
+   </div>
+
+  </div>
+
+  <!-- ── USER MANAGER (admin only) ──────────────────────────────────────────── -->
+  <div class="sec admin-only" id="usermgr" style="display:none">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>admin.user_management</div><div class="pg-h1">User Manager</div></div>
+    <div style="display:flex;gap:8px">
+     <button class="btn-refresh" onclick="goS('dashboard')"><span>← BACK</span></button>
+     <button class="btn-refresh" onclick="loadAllUsers()"><span><span class="r-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>REFRESH</span></button>
+    </div>
+   </div>
+   <div class="pnl" style="--pnl-c:#b347ff">
+    <div class="pnl-h"><div class="pnl-title" style="color:var(--c4)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/></svg>ALL REGISTERED USERS</div></div>
+    <div class="usr-hdr"><span class="tbl-hcell">Username</span><span class="tbl-hcell">Role</span><span class="tbl-hcell">2FA</span><span class="tbl-hcell">Registered</span><span class="tbl-hcell">Actions</span></div>
+    <div id="userMgrList" style="max-height:480px;overflow-y:auto"></div>
+   </div>
+  </div>
+
+  <!-- ── AUDIT (admin only — NOT on dashboard quick actions) ──────────── -->
+  <div class="sec admin-only" id="audit" style="display:none">
+   <div class="pg-head">
+    <div><div class="pg-eyebrow"><span>›</span>admin.audit_trail</div><div class="pg-h1">System Audit Log</div></div>
+    <button class="btn-refresh" onclick="goS('dashboard')"><span>← BACK</span></button>
+   </div>
+   <div class="pnl" style="--pnl-c:#ffd600">
+    <div class="pnl-h">
+     <div class="pnl-title" style="color:var(--c5)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      ACTIVITY MONITOR — LAST 100 EVENTS
+     </div>
+     <!-- Refresh icon button — lives inside the panel header -->
+     <button class="audit-refresh-btn" onclick="loadAudit()" title="Refresh Log">
+      <svg class="audit-refresh-ico" width="16" height="16" viewBox="0 0 24 24" fill="none">
+       <polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+     </button>
+    </div>
+    <div style="overflow-x:auto;max-height:560px;overflow-y:auto">
+     <table class="audit-table"><thead><tr><th>#</th><th>User</th><th>Action</th><th>Details</th><th>IP</th><th>Timestamp</th><th>Integrity</th></tr></thead><tbody id="auditBody"></tbody></table>
+    </div>
+   </div>
+  </div>
+
+ </main>
+</div>
+
+<!-- ════════ MODAL ════════════════════════════════════════════════ -->
+<div class="modal-bg" id="msgModal">
+ <div class="modal">
+  <div class="m-hdr">
+   <h3><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>DECRYPT MESSAGE</h3>
+   <button class="m-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="m-body">
+   <div class="m-meta">
+    <span>FROM: <b id="mFrom">—</b></span><span id="mCat"></span>
+    <span>TIME: <b id="mTime">—</b></span><span>KEY_ID: <b id="mKeyId" style="color:var(--c5)">—</b></span>
+   </div>
+   <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:5px">// encrypted ciphertext preview</div>
+   <div class="cipher-box" id="mCipher"></div>
+   <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">// decrypted plaintext</div>
+   <div class="plain-box" id="mPlain">// awaiting decryption command...</div>
+   <div id="mIntegrity" style="margin-bottom:12px;display:none"></div>
+   <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
+    <button class="btn-dec" onclick="doDecrypt()">[ DECRYPT MESSAGE ]</button>
+    <div class="v-badge" id="mVerify" style="display:none"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5v5.5c0 5 3.3 9.7 8 11 4.7-1.3 8-6 8-11V5.5L12 2z" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>HMAC VERIFIED</div>
+   </div>
+   <div id="attResultBox" style="display:none">
+    <div class="att-result-box">
+     <div class="att-result-title">📎 ENCRYPTED ATTACHMENT DECRYPTED</div>
+     <div id="attResultContent"></div>
+    </div>
+   </div>
+   <div style="border-top:1px solid var(--border);padding-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+     <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em">// conversation history</span>
+     <button class="btn-refresh" onclick="loadHistory()" style="padding:6px 14px"><span><span class="r-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><polyline points="23,4 23,11 16,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>LOAD</span></button>
+    </div>
+    <div class="chat-zone" id="chatBox"><div class="empty-st">// click LOAD to view conversation history</div></div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="ta" id="ta"></div>
+
+<script src="/script.js"></script>
+</body>
+</html>
