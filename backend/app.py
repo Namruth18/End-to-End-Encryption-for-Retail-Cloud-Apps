@@ -1427,5 +1427,10 @@ if __name__ == "__main__":
     print("║  SecureCloud E2EE  |  Yenepoya University 2026          ║")
     print("║  SQLite · Fernet AES-128 · Key Rotation · 2FA · Files   ║")
     print("╚══════════════════════════════════════════════════════════╝")
-    print("🌐  Open  http://localhost:8000  in your browser")
-    app.run(debug=True, host="0.0.0.0", port=8000)
+    import os
+    port = int(os.environ.get("PORT", 8000))
+
+    app.run(
+        debug=True,
+        host="0.0.0.0",
+        port=port)
